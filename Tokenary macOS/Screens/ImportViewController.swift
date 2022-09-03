@@ -1,18 +1,17 @@
-// Copyright © 2021 Tokenary. All rights reserved.
+// Copyright © 2021 Encrypted Ink. All rights reserved.
 
 import Cocoa
-import WalletCore
 
 class ImportViewController: NSViewController {
     
     private let walletsManager = WalletsManager.shared
-    var selectAccountAction: SelectAccountAction?
+    var onSelectedWallet: ((Int, InkWallet) -> Void)?
     private var inputValidationResult = WalletsManager.InputValidationResult.invalid
     
     @IBOutlet weak var textField: NSTextField! {
         didSet {
             textField.delegate = self
-            textField.placeholderString = Strings.importWalletTextFieldPlaceholder
+            textField.placeholderString = "Options:\n\n• Ethereum Private Key\n• Secret Words\n• Keystore"
         }
     }
     @IBOutlet weak var okButton: NSButton!
@@ -30,24 +29,13 @@ class ImportViewController: NSViewController {
     }
  
     private func showPasswordAlert() {
-        let alert = Alert()
-        alert.messageText = Strings.enterKeystorePassword
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: Strings.ok)
-        alert.addButton(withTitle: Strings.cancel)
-        
-        let passwordTextField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 160, height: 20))
-        passwordTextField.bezelStyle = .roundedBezel
-        alert.accessoryView = passwordTextField
-        passwordTextField.isAutomaticTextCompletionEnabled = false
-        passwordTextField.alignment = .center
-        
+        let passwordAlert = PasswordAlert(title: "Enter keystore password.")
         DispatchQueue.main.async {
-            passwordTextField.becomeFirstResponder()
+            passwordAlert.passwordTextField.becomeFirstResponder()
         }
         
-        if alert.runModal() == .alertFirstButtonReturn {
-            importWith(input: textField.stringValue, password: passwordTextField.stringValue)
+        if passwordAlert.runModal() == .alertFirstButtonReturn {
+            importWith(input: textField.stringValue, password: passwordAlert.passwordTextField.stringValue)
         }
     }
     
@@ -56,14 +44,16 @@ class ImportViewController: NSViewController {
             let wallet = try walletsManager.addWallet(input: input, inputPassword: password)
             showAccountsList(newWalletId: wallet.id)
         } catch {
-            Alert.showWithMessage(Strings.failedToImportWallet, style: .critical)
+            Alert.showWithMessage("Failed to import account", style: .critical)
         }
     }
     
     private func showAccountsList(newWalletId: String?) {
         let accountsListViewController = instantiate(AccountsListViewController.self)
-        accountsListViewController.selectAccountAction = selectAccountAction
-        accountsListViewController.newWalletId = newWalletId
+        accountsListViewController.onSelectedWallet = onSelectedWallet
+        if let newWalletId = newWalletId {
+            accountsListViewController.newWalletIds = [newWalletId]
+        }
         view.window?.contentViewController = accountsListViewController
     }
     

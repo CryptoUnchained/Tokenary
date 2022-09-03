@@ -32,3 +32,38 @@ class Alert: NSAlert {
     }
     
 }
+
+class PasswordAlert: Alert {
+    
+    let passwordTextField: NSSecureTextField = {
+        let passwordTextField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 160, height: 20))
+        passwordTextField.bezelStyle = .roundedBezel
+        passwordTextField.isAutomaticTextCompletionEnabled = false
+        passwordTextField.alignment = .center
+        return passwordTextField
+    }()
+    
+    init(title: String) {
+        super.init()
+        
+        messageText = title
+        alertStyle = .informational
+        addButton(withTitle: "OK")
+        addButton(withTitle: "Cancel")
+        accessoryView = passwordTextField
+    }
+}
+
+class LoadingAlert: Alert {
+    
+    init(title: String) {
+        super.init()
+        
+        addButton(withTitle: Strings.cancel)
+        messageText = title
+        let progress = NSProgressIndicator(frame: NSRect(x: 0, y: 0, width: 230, height: 20))
+        progress.style = .spinning
+        progress.startAnimation(nil)
+        accessoryView = progress
+    }
+}
